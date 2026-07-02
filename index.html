@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBDC WhatsApp Formatter + PDF Splitter</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6274317218693048"
+     crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #25D366;
+    --green-dark: #128C7E;
+    --green-deeper: #075E54;
+    --bg: #f0f2f5;
+    --card: #fff;
+    --border: #e2e8f0;
+    --text: #1a1a2e;
+    --muted: #64748b;
+    --wa-bg: #ECE5DD;
+    --accent: #6366f1;
+    --accent2: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 24px 20px 40px;
+  }
+
+  /* ─── Header ─────────────────────────────── */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green-dark);
+    letter-spacing: -0.3px;
+  }
+  .header p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ─── Tab switcher ────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    max-width: 1200px;
+    margin: 0 auto 20px;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    width: fit-content;
+  }
+  .tab-btn {
+    padding: 9px 22px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--green-dark);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(18,140,126,0.3);
+  }
+  .tab-btn:hover:not(.active) { background: var(--bg); color: var(--text); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ─── WhatsApp tab layout ─────────────────── */
+  .layout {
+    display: flex;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .panel {
+    flex: 1;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .panel h2 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  textarea {
+    width: 100%;
+    height: 460px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    resize: vertical;
+    line-height: 1.7;
+    outline: none;
+    color: var(--text);
+    background: #fafafa;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--green); background: #fff; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  button {
+    flex: 1;
+    padding: 11px;
+    border: none;
+    border-radius: 9px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-convert { background: var(--green); color: #fff; }
+  .btn-convert:hover { background: #1ebe5d; transform: translateY(-1px); }
+  .btn-clear   { background: #f1f5f9; color: var(--muted); }
+  .btn-clear:hover { background: #e2e8f0; }
+  .btn-copy    { background: var(--green-dark); color: #fff; }
+  .btn-copy:hover { background: #0e7a6e; }
+  .btn-copy-text { background: var(--green-deeper); color: #fff; }
+  .btn-copy-text:hover { background: #064e46; }
+
+  .wa-preview {
+    background: var(--wa-bg);
+    border-radius: 10px;
+    padding: 14px;
+    height: 460px;
+    overflow-y: auto;
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .wa-bubble {
+    background: #fff;
+    border-radius: 0 8px 8px 8px;
+    padding: 10px 14px;
+    max-width: 95%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #111;
+  }
+  .wa-bubble b  { font-weight: 700; }
+  .wa-bubble i  { font-style: italic; color: #444; }
+  .wa-bubble s  { text-decoration: line-through; color: #888; }
+  .wa-bubble .wa-hr { border: none; border-top: 1px solid #ccc; margin: 6px 0; }
+
+  .emoji-bar {
+    background: #f8fafc;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+  .emoji-bar span { font-size: 11px; color: var(--muted); margin-right: 4px; }
+  .emoji-btn {
+    background: none;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 7px;
+    font-size: 16px;
+    padding: 3px 7px;
+    cursor: pointer;
+    flex: none;
+    line-height: 1.4;
+    transition: all 0.15s;
+  }
+  .emoji-btn:hover { background: #f0fdf4; border-color: var(--green); }
+
+  .guide {
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-size: 11px;
+    color: #444;
+    line-height: 1.9;
+  }
+  .guide b { color: var(--green-dark); }
+
+  .status {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    text-align: center;
+    margin-top: 6px;
+    height: 16px;
+  }
+
+  /* ─── PDF Splitter tab ────────────────────── */
+  .pdf-tab-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .drop-zone {
+    border: 2.5px dashed #c7d2fe;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #eef2ff 0%, #f0fdf4 100%);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragging {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, #e0e7ff 0%, #dcfce7 100%);
+    transform: scale(1.01);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .drop-icon { font-size: 52px; margin-bottom: 12px; }
+  .drop-zone h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .drop-zone p  { font-size: 13px; color: var(--muted); }
+
+  /* Settings bar */
+  .settings-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .settings-bar label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .settings-bar select, .settings-bar input[type="range"] {
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    outline: none;
+    background: #fafafa;
+    cursor: pointer;
+  }
+  .settings-bar select:focus { border-color: var(--accent); }
+  #scaleVal { font-weight: 700; color: var(--accent); }
+
+  /* Progress */
+  .progress-wrap {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    display: none;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .progress-bar-track {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--accent));
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  /* Download all button */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin: 16px 0;
+    display: none;
+  }
+  .btn-dl-all {
+    background: linear-gradient(135deg, var(--accent), #818cf8);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+  }
+  .btn-dl-all:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,0.45); }
+  .btn-clear-pdf {
+    background: #f1f5f9;
+    color: var(--muted);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-clear-pdf:hover { background: #e2e8f0; }
+
+  /* Page grid */
+  .page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .page-card {
+    background: var(--card);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1.5px solid var(--border);
+  }
+  .page-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.13); }
+  .page-thumb {
+    width: 100%;
+    display: block;
+    background: #f8fafc;
+  }
+  .page-footer {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  .page-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .btn-dl-page {
+    background: var(--green-dark);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex: none;
+  }
+  .btn-dl-page:hover { background: var(--green); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 700px) {
+    .layout { flex-direction: column; }
+    .tabs { width: 100%; }
+    .tab-btn { flex: 1; padding: 9px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📱 CBDC WhatsApp Formatter + PDF Splitter</h1>
+  <p>Format WhatsApp messages or extract PDF pages as high-quality PNG images</p>
+</div>
+
+<!-- Tab switcher -->
+<div style="display:flex;justify-content:center;margin-bottom:20px;">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('wa')">💬 WhatsApp Formatter</button>
+    <button class="tab-btn" onclick="switchTab('pdf')">📄 PDF → PNG Splitter</button>
+    <button class="tab-btn" onclick="switchTab('topper')">🏆 Topper Congrats</button>
+  </div>
+</div>
+
+<!-- ═══════════ TAB 1: WhatsApp Formatter ═══════════ -->
+<div id="tab-wa" class="tab-content active">
+  <div class="layout">
+
+    <div class="panel">
+      <h2>Step 1 — Paste Plain Text Here</h2>
+
+      <div class="guide">
+        <b>Formatting rules (applied automatically):</b><br>
+        Lines starting with <b>SECTION:</b> → bold heading<br>
+        Lines with <b>RANK 1</b> → 🥇 gold highlight<br>
+        Lines with <b>TOP 3</b> / <b>TOP 10</b> → trophy / fire emoji<br>
+        Lines starting with <b>&gt;&gt;</b> → ✅ branch entry<br>
+        Lines starting with a number + dot (<b>1.</b>) → 🔴 alert entry<br>
+        Lines of dashes (<b>---</b>) → divider<br>
+        Lines ending with <b>!</b> in congratulations → 🎉 added<br>
+        <b>*text*</b> → <b>bold</b> &nbsp;|&nbsp; <b>_text_</b> → <i>italic</i>
+      </div>
+
+      <div class="emoji-bar">
+        <span>Quick insert:</span>
+        <button class="emoji-btn" onclick="insertEmoji('🏆')">🏆</button>
+        <button class="emoji-btn" onclick="insertEmoji('🥇')">🥇</button>
+        <button class="emoji-btn" onclick="insertEmoji('🔥')">🔥</button>
+        <button class="emoji-btn" onclick="insertEmoji('📈')">📈</button>
+        <button class="emoji-btn" onclick="insertEmoji('⭐')">⭐</button>
+        <button class="emoji-btn" onclick="insertEmoji('✅')">✅</button>
+        <button class="emoji-btn" onclick="insertEmoji('🎉')">🎉</button>
+        <button class="emoji-btn" onclick="insertEmoji('💪')">💪</button>
+        <button class="emoji-btn" onclick="insertEmoji('🚨')">🚨</button>
+        <button class="emoji-btn" onclick="insertEmoji('🔴')">🔴</button>
+        <button class="emoji-btn" onclick="insertEmoji('🌍')">🌍</button>
+        <button class="emoji-btn" onclick="insertEmoji('🌸')">🌸</button>
+        <button class="emoji-btn" onclick="insertEmoji('👇')">👇</button>
+        <button class="emoji-btn" onclick="insertEmoji('📌')">📌</button>
+        <button class="emoji-btn" onclick="insertEmoji('✨')">✨</button>
+        <button class="emoji-btn" onclick="insertEmoji('🤝')">🤝</button>
+      </div>
+
+      <textarea id="inputText" placeholder="Paste your plain text report here..."></textarea>
+
+      <div class="btn-row">
+        <button class="btn-convert" onclick="convertText()">▶ Convert &amp; Preview</button>
+        <button class="btn-clear" onclick="clearAll()">✕ Clear</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Step 2 — Preview &amp; Copy</h2>
+
+      <div class="wa-preview" id="waPreview">
+        <div class="wa-bubble" id="waBubble">
+          <span style="color:#aaa;font-style:italic;">Your formatted message will appear here...</span>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn-copy" onclick="copyFormatted()">📋 Copy Formatted (WhatsApp)</button>
+        <button class="btn-copy-text" onclick="copyPlainOutput()">📄 Copy Plain Text</button>
+      </div>
+      <div class="status" id="status2"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ TAB 2: PDF Splitter ═══════════ -->
+<div id="tab-pdf" class="tab-content">
+  <div class="pdf-tab-wrap">
+
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="pdfInput" accept=".pdf" onchange="handlePdfFile(this.files[0])">
+      <div class="drop-icon">📂</div>
+      <h3>Drop your PDF here</h3>
+      <p>or click to browse &nbsp;·&nbsp; Each page will be saved as a cropped PNG</p>
+    </div>
+
+    <div class="settings-bar">
+      <label>
+        Scale / DPI:
+        <input type="range" id="scaleSlider" min="1" max="4" step="0.5" value="2.5"
+               oninput="document.getElementById('scaleVal').textContent = this.value + '×'">
+        <span id="scaleVal">2.5×</span>
+      </label>
+      <label>
+        Padding (px):
+        <input type="range" id="padSlider" min="0" max="40" step="2" value="6"
+               oninput="document.getElementById('padVal').textContent = this.value + 'px'">
+        <span id="padVal">6px</span>
+      </label>
+      <label>
+        White threshold:
+        <input type="range" id="threshSlider" min="200" max="255" step="1" value="245"
+               oninput="document.getElementById('threshVal').textContent = this.value">
+        <span id="threshVal">245</span>
+      </label>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <span id="progressText">Processing pages…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="action-bar" id="actionBar">
+      <button class="btn-dl-all" onclick="downloadAll()">⬇ Download All Pages as ZIP</button>
+      <button class="btn-clear-pdf" onclick="clearPdf()">✕ Clear</button>
+    </div>
+
+    <div class="page-grid" id="pageGrid">
+      <div class="empty-state" id="emptyState">Upload a PDF above to get started.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════ TAB 3: Topper Congrats Builder ═══════════ -->
+<div id="tab-topper" class="tab-content">
+  <div class="layout">
+
+    <div class="panel">
+      <h2>Step 1 — Build Your Message</h2>
+
+      <div class="guide">
+        <b>How it works:</b><br>
+        Set the date, then add one section per registration type.<br>
+        Tick <b>MTD Topper</b> if that section is a month-to-date leaderboard.<br>
+        For each Scale, list branch names separated by <b>commas</b> if there are multiple toppers.<br>
+        Emojis, bold headings and dividers are added automatically.
+      </div>
+
+      <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">Date</label>
+      <input type="text" id="topperDate" placeholder="e.g. 01.01.2026"
+             style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:14px;font-family:'Sora',sans-serif;font-size:13px;outline:none;">
+
+      <div id="topperSections"></div>
+
+      <div class="btn-row">
+        <button class="btn-clear" onclick="addTopperSection()">➕ Add Section</button>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn-convert" onclick="generateTopperMessage()">▶ Generate &amp; Preview</button>
+        <button class="btn-clear" onclick="clearTopper()">✕ Clear All</button>
+      </div>
+      <div class="status" id="topperStatus"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Step 2 — Preview &amp; Copy</h2>
+
+      <div class="wa-preview" id="topperWaPreview">
+        <div class="wa-bubble" id="topperWaBubble">
+          <span style="color:#aaa;font-style:italic;">Your formatted message will appear here...</span>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn-copy" onclick="copyTopperFormatted()">📋 Copy Formatted (WhatsApp)</button>
+      </div>
+      <div class="status" id="topperStatus2"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PDF.js + JSZip CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ── PDF.js worker ──────────────────────────────────────────────────
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── Tab switching ──────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Drag & drop wiring ─────────────────────────────────────────────
+var dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragging'); });
+dz.addEventListener('dragleave', function()  { dz.classList.remove('dragging'); });
+dz.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dz.classList.remove('dragging');
+  var f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') handlePdfFile(f);
+});
+
+// ── Stored page blobs for ZIP ──────────────────────────────────────
+var pageBlobs = [];
+var pdfFileName = 'document';
+
+// ── Main PDF handler ───────────────────────────────────────────────
+async function handlePdfFile(file) {
+  if (!file) return;
+  pdfFileName = file.name.replace(/\.pdf$/i, '');
+  pageBlobs = [];
+
+  var grid = document.getElementById('pageGrid');
+  grid.innerHTML = '';
+  document.getElementById('emptyState') && (document.getElementById('emptyState').remove());
+
+  var progressWrap = document.getElementById('progressWrap');
+  var progressFill = document.getElementById('progressFill');
+  var progressText = document.getElementById('progressText');
+  var progressPct  = document.getElementById('progressPct');
+  var actionBar    = document.getElementById('actionBar');
+
+  progressWrap.style.display = 'block';
+  actionBar.style.display    = 'none';
+
+  var arrayBuf = await file.arrayBuffer();
+  var pdf = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+  var total = pdf.numPages;
+
+  for (var i = 1; i <= total; i++) {
+    var pct = Math.round(((i - 1) / total) * 100);
+    progressFill.style.width = pct + '%';
+    progressText.textContent = 'Rendering page ' + i + ' of ' + total + '…';
+    progressPct.textContent  = pct + '%';
+
+    var blob = await renderPageToBlob(pdf, i);
+    pageBlobs.push({ blob: blob, pageNum: i });
+
+    // Add card to grid
+    var url = URL.createObjectURL(blob);
+    addPageCard(grid, i, url, blob);
+  }
+
+  progressFill.style.width = '100%';
+  progressText.textContent = '✓ Done! ' + total + ' page' + (total > 1 ? 's' : '') + ' extracted.';
+  progressPct.textContent  = '100%';
+  actionBar.style.display  = 'flex';
+}
+
+// ── Render a single page with crop ────────────────────────────────
+async function renderPageToBlob(pdf, pageNum) {
+  var scale     = parseFloat(document.getElementById('scaleSlider').value);
+  var padding   = parseInt(document.getElementById('padSlider').value);
+  var threshold = parseInt(document.getElementById('threshSlider').value);
+
+  var page     = await pdf.getPage(pageNum);
+  var viewport = page.getViewport({ scale: scale });
+
+  // Render full page to offscreen canvas
+  var canvas  = document.createElement('canvas');
+  canvas.width  = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+  // ── Auto-crop whitespace ────────────────────────────────────────
+  var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  var bounds = findContentBounds(imageData, threshold);
+
+  // Apply padding, clamp to canvas
+  var x1 = Math.max(0, bounds.x1 - padding);
+  var y1 = Math.max(0, bounds.y1 - padding);
+  var x2 = Math.min(canvas.width,  bounds.x2 + padding);
+  var y2 = Math.min(canvas.height, bounds.y2 + padding);
+  var w  = x2 - x1;
+  var h  = y2 - y1;
+
+  // Draw cropped region into final canvas
+  var out = document.createElement('canvas');
+  out.width  = w;
+  out.height = h;
+  var outCtx = out.getContext('2d');
+  outCtx.drawImage(canvas, x1, y1, w, h, 0, 0, w, h);
+
+  return new Promise(function(resolve) {
+    out.toBlob(function(blob) { resolve(blob); }, 'image/png', 1.0);
+  });
+}
+
+// ── Find tightest bounding box of non-white pixels ────────────────
+function findContentBounds(imageData, threshold) {
+  var data = imageData.data;
+  var w = imageData.width;
+  var h = imageData.height;
+  var minX = w, maxX = 0, minY = h, maxY = 0;
+
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var idx = (y * w + x) * 4;
+      var r = data[idx], g = data[idx+1], b = data[idx+2];
+      // Non-white pixel?
+      if (r < threshold || g < threshold || b < threshold) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  // Fallback: full canvas if page is blank
+  if (minX > maxX || minY > maxY) {
+    return { x1: 0, y1: 0, x2: w, y2: h };
+  }
+  return { x1: minX, y1: minY, x2: maxX, y2: maxY };
+}
+
+// ── Add a page card to the grid ────────────────────────────────────
+function addPageCard(grid, pageNum, blobUrl, blob) {
+  var card = document.createElement('div');
+  card.className = 'page-card';
+
+  var img = document.createElement('img');
+  img.className = 'page-thumb';
+  img.src = blobUrl;
+  img.alt = 'Page ' + pageNum;
+
+  var footer = document.createElement('div');
+  footer.className = 'page-footer';
+  footer.innerHTML = '<span class="page-label">Page ' + pageNum + '</span>';
+
+  var dlBtn = document.createElement('button');
+  dlBtn.className = 'btn-dl-page';
+  dlBtn.textContent = '⬇ Save';
+  dlBtn.onclick = function() {
+    triggerDownload(blobUrl, pdfFileName + '_page' + String(pageNum).padStart(3,'0') + '.png');
+  };
+
+  footer.appendChild(dlBtn);
+  card.appendChild(img);
+  card.appendChild(footer);
+  grid.appendChild(card);
+}
+
+// ── Download all pages as ZIP ──────────────────────────────────────
+async function downloadAll() {
+  if (pageBlobs.length === 0) return;
+  var zip = new JSZip();
+  pageBlobs.forEach(function(item) {
+    zip.file(pdfFileName + '_page' + String(item.pageNum).padStart(3,'0') + '.png', item.blob);
+  });
+  var content = await zip.generateAsync({ type: 'blob' });
+  triggerDownload(URL.createObjectURL(content), pdfFileName + '_pages.zip');
+}
+
+function triggerDownload(url, filename) {
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+}
+
+function clearPdf() {
+  pageBlobs = [];
+  document.getElementById('pageGrid').innerHTML =
+    '<div class="empty-state" id="emptyState">Upload a PDF above to get started.</div>';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('actionBar').style.display    = 'none';
+  document.getElementById('pdfInput').value = '';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// WhatsApp Formatter Logic
+// ══════════════════════════════════════════════════════════════════
+function formatMessage(raw) {
+  var lines = raw.split('\n'), out = [];
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i], trim = line.trim();
+    if (trim === '') { out.push(''); continue; }
+    if (/^-{3,}$/.test(trim)) { out.push('➖➖➖➖➖➖➖➖➖➖'); continue; }
+    var formatted = trim;
+    var isHeader = isHeadingLine(trim);
+    if (/RANK\s*1/i.test(trim) && /PAN\s*INDIA/i.test(trim)) {
+      formatted = addEmoji('🥇', formatted); formatted = ensureBold(formatted);
+    } else if (/Top\s*3/i.test(trim) || /Rank.*#[123]\b/i.test(trim)) {
+      formatted = addEmoji('🏆', formatted); formatted = ensureBold(formatted);
+    } else if (/Top\s*10/i.test(trim) && /Rank/i.test(trim)) {
+      formatted = addEmoji('🔥', formatted); formatted = ensureBold(formatted);
+    } else if (/Our Region Rank/i.test(trim)) {
+      formatted = addEmoji('📈', formatted); formatted = ensureBold(formatted);
+    } else if (/PAN India Region Ranking/i.test(trim)) {
+      formatted = '🌍 ' + ensureBold(formatted);
+    } else if (/Our Branches in PAN India/i.test(trim)) {
+      formatted = '⭐ ' + ensureBold(formatted);
+    } else if (/Day Topper/i.test(trim)) {
+      formatted = '🏆 ' + ensureBold(formatted);
+    } else if (/Bottom\s*5/i.test(trim) || /Needs Attention/i.test(trim)) {
+      formatted = '🚨 ' + ensureBold(formatted);
+    } else if (/Congratulations/i.test(trim)) {
+      formatted = '🎉 ' + formatted;
+    } else if (/leads today/i.test(trim) && /registrations/i.test(trim)) {
+      formatted = '🥇 ' + ensureBold(formatted);
+    } else if (/^>>/.test(trim)) {
+      formatted = '✅' + formatted.replace(/^>>/, '');
+    } else if (/^\d+\./.test(trim)) {
+      formatted = '🔴 ' + formatted;
+    } else if (/together we/i.test(trim)) {
+      formatted = '🌸 ' + ensureBold(formatted);
+    } else if (/Generated at/i.test(trim)) {
+      formatted = '_' + trim + '_';
+    } else if (isHeader) {
+      formatted = ensureBold(formatted);
+    }
+    out.push(formatted);
+  }
+  return out.join('\n');
+}
+function isHeadingLine(s) {
+  if (/^\d+\./.test(s) || /^>>/.test(s)) return false;
+  if (/Today:\s*\d/i.test(s) || /Total:\s*\d/i.test(s)) return false;
+  var upper = s.replace(/[^a-zA-Z]/g, '');
+  if (!upper.length) return false;
+  return ((s.match(/[A-Z]/g)||[]).length / upper.length) > 0.7 && s.length < 80;
+}
+function ensureBold(s) {
+  if (/^\*.*\*$/.test(s)) return s;
+  return '*' + s.replace(/^\*/, '').replace(/\*$/, '') + '*';
+}
+function addEmoji(emoji, s) {
+  return s.charAt(0) === '*' ? '*' + emoji + ' ' + s.slice(1) : emoji + ' ' + s;
+}
+function renderHTML(text) {
+  var lines = text.split('\n'), html = '';
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (line === '') { html += '<br>'; continue; }
+    if (/^➖+$/.test(line.trim())) { html += '<hr class="wa-hr">'; continue; }
+    var p = escapeHtml(line)
+      .replace(/\*([^*\n]+)\*/g, '<b>$1</b>')
+      .replace(/_([^_\n]+)_/g, '<i>$1</i>')
+      .replace(/~([^~\n]+)~/g, '<s>$1</s>');
+    html += p + '<br>';
+  }
+  return html;
+}
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+var lastFormatted = '';
+function convertText() {
+  var raw = document.getElementById('inputText').value;
+  if (!raw.trim()) { setStatus('status','Paste some text first!','#ef4444'); return; }
+  lastFormatted = formatMessage(raw);
+  document.getElementById('waBubble').innerHTML = renderHTML(lastFormatted);
+  setStatus('status','✓ Converted successfully','#25D366');
+}
+function clearAll() {
+  document.getElementById('inputText').value = '';
+  document.getElementById('waBubble').innerHTML =
+    '<span style="color:#aaa;font-style:italic;">Your formatted message will appear here...</span>';
+  lastFormatted = '';
+  setStatus('status','',''); setStatus('status2','','');
+}
+function copyFormatted() {
+  if (!lastFormatted) { setStatus('status2','Convert first!','#ef4444'); return; }
+  copyToClipboard(lastFormatted,'status2','✓ Formatted text copied! Paste into WhatsApp.');
+}
+function copyPlainOutput() {
+  var raw = document.getElementById('inputText').value;
+  if (!raw.trim()) { setStatus('status2','Nothing to copy!','#ef4444'); return; }
+  copyToClipboard(raw,'status2','✓ Plain text copied!');
+}
+function insertEmoji(emoji) {
+  var ta = document.getElementById('inputText');
+  var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+  ta.value = v.substring(0,s) + emoji + v.substring(e);
+  ta.selectionStart = ta.selectionEnd = s + emoji.length;
+  ta.focus();
+}
+function copyToClipboard(text, statusId, successMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(function() { setStatus(statusId, successMsg, '#25D366'); })
+      .catch(function() { fallbackCopy(text, statusId, successMsg); });
+  } else { fallbackCopy(text, statusId, successMsg); }
+}
+function fallbackCopy(text, statusId, successMsg) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); setStatus(statusId, successMsg, '#25D366'); }
+  catch(e) { setStatus(statusId,'Copy failed','#ef4444'); }
+  document.body.removeChild(ta);
+}
+function setStatus(id, msg, color) {
+  var el = document.getElementById(id);
+  el.textContent = msg; el.style.color = color;
+  if (msg) setTimeout(function() { if (el.textContent === msg) el.textContent = ''; }, 4000);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('inputText').addEventListener('paste', function() {
+    setTimeout(convertText, 100);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════
+// Topper Congrats Message Builder
+// ══════════════════════════════════════════════════════════════════
+var topperSectionCounter = 0;
+var lastTopperFormatted = '';
+
+function addTopperSection() {
+  topperSectionCounter++;
+  var container = document.getElementById('topperSections');
+  var div = document.createElement('div');
+  div.className = 'topper-section';
+  div.dataset.id = topperSectionCounter;
+  div.style.cssText = 'border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:#fafafa;';
+  div.innerHTML =
+    '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">' +
+      '<label style="font-size:12px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:6px;">' +
+        '<input type="checkbox" class="topper-mtd"> MTD Topper' +
+      '</label>' +
+      '<select class="topper-category" onchange="toggleCustomCategory(this)" ' +
+        'style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;background:#fff;">' +
+        '<option value="Yono registrations">Yono registrations</option>' +
+        '<option value="Whatsapp Banking registrations">Whatsapp Banking registrations</option>' +
+        '<option value="custom">Custom…</option>' +
+      '</select>' +
+      '<input type="text" class="topper-category-custom" placeholder="Custom category name" ' +
+        'style="display:none;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;flex:1;min-width:140px;">' +
+      '<button onclick="removeTopperSection(this)" ' +
+        'style="background:#fee2e2;color:#ef4444;border:none;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;flex:none;">✕ Remove</button>' +
+    '</div>' +
+    '<input type="text" class="topper-scale4" placeholder="Scale IV branches (comma-separated)" ' +
+      'style="width:100%;margin-bottom:6px;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;">' +
+    '<input type="text" class="topper-scale3" placeholder="Scale III branches (comma-separated)" ' +
+      'style="width:100%;margin-bottom:6px;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;">' +
+    '<input type="text" class="topper-scale2" placeholder="Scale II branches (comma-separated)" ' +
+      'style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;">';
+  container.appendChild(div);
+}
+
+function toggleCustomCategory(sel) {
+  var custom = sel.parentElement.querySelector('.topper-category-custom');
+  custom.style.display = sel.value === 'custom' ? 'block' : 'none';
+}
+
+function removeTopperSection(btn) {
+  btn.closest('.topper-section').remove();
+}
+
+function categoryEmoji(cat) {
+  if (/yono/i.test(cat)) return '📲';
+  if (/whatsapp/i.test(cat)) return '💬';
+  return '📌';
+}
+
+function generateTopperMessage() {
+  var date = document.getElementById('topperDate').value.trim();
+  if (!date) {
+    var d = new Date();
+    date = String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
+  }
+
+  var sections = document.querySelectorAll('#topperSections .topper-section');
+  if (sections.length === 0) {
+    setStatus('topperStatus', 'Add at least one section first!', '#ef4444');
+    return;
+  }
+
+  var lines = [];
+  lines.push('🎉 *Congratulations to toppers on ' + date + '* 🎉');
+  lines.push('➖➖➖➖➖➖➖➖➖➖');
+  lines.push('');
+
+  var hasContent = false;
+
+  sections.forEach(function(sec) {
+    var mtd = sec.querySelector('.topper-mtd').checked;
+    var catSel = sec.querySelector('.topper-category').value;
+    var catCustom = sec.querySelector('.topper-category-custom').value.trim();
+    var category = catSel === 'custom' ? (catCustom || 'Registrations') : catSel;
+    var s4 = sec.querySelector('.topper-scale4').value.trim();
+    var s3 = sec.querySelector('.topper-scale3').value.trim();
+    var s2 = sec.querySelector('.topper-scale2').value.trim();
+
+    if (!s4 && !s3 && !s2) return; // skip empty sections
+    hasContent = true;
+
+    if (mtd) lines.push('🏅 _MTD Topper:_');
+    lines.push(categoryEmoji(category) + ' *' + category + ':*');
+    lines.push('➖➖➖➖➖➖➖➖➖➖');
+    if (s4) lines.push('🥇 *Scale IV* - ' + s4);
+    if (s3) lines.push('🥈 *Scale III* - ' + s3);
+    if (s2) lines.push('🥉 *Scale II* - ' + s2);
+    lines.push('');
+  });
+
+  if (!hasContent) {
+    setStatus('topperStatus', 'Fill in at least one Scale field!', '#ef4444');
+    return;
+  }
+
+  while (lines.length && lines[lines.length - 1] === '') lines.pop();
+
+  var text = lines.join('\n');
+  lastTopperFormatted = text;
+  document.getElementById('topperWaBubble').innerHTML = renderHTML(text);
+  setStatus('topperStatus', '✓ Message generated', '#25D366');
+}
+
+function copyTopperFormatted() {
+  if (!lastTopperFormatted) { setStatus('topperStatus2', 'Generate first!', '#ef4444'); return; }
+  copyToClipboard(lastTopperFormatted, 'topperStatus2', '✓ Copied! Paste into WhatsApp.');
+}
+
+function clearTopper() {
+  document.getElementById('topperDate').value = '';
+  document.getElementById('topperSections').innerHTML = '';
+  document.getElementById('topperWaBubble').innerHTML =
+    '<span style="color:#aaa;font-style:italic;">Your formatted message will appear here...</span>';
+  lastTopperFormatted = '';
+  setStatus('topperStatus', '', '');
+  setStatus('topperStatus2', '', '');
+  addTopperSection();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  addTopperSection();
+});
+</script>
+</body>
+</html>
