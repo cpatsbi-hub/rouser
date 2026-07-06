@@ -555,8 +555,8 @@
       </div>
 
       <label style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;">Date</label>
-      <input type="text" id="topperDate" placeholder="e.g. 01.01.2026"
-             style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:14px;font-family:'Sora',sans-serif;font-size:13px;outline:none;">
+      <input type="date" id="topperDate"
+             style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:14px;font-family:'Sora',sans-serif;font-size:13px;outline:none;color:var(--text);">
 
       <div id="topperSections"></div>
 
@@ -951,6 +951,8 @@ function addTopperSection() {
       '<button onclick="removeTopperSection(this)" ' +
         'style="background:#fee2e2;color:#ef4444;border:none;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer;flex:none;">✕ Remove</button>' +
     '</div>' +
+    '<input type="text" class="topper-overall" placeholder="🏆 Overall topper branch(es) for this category" ' +
+      'style="width:100%;margin-bottom:8px;padding:8px 10px;border:1.5px solid #fde68a;background:#fffbeb;border-radius:7px;font-size:12px;outline:none;font-weight:600;">' +
     '<input type="text" class="topper-scale4" placeholder="Scale IV branches (comma-separated)" ' +
       'style="width:100%;margin-bottom:6px;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;outline:none;">' +
     '<input type="text" class="topper-scale3" placeholder="Scale III branches (comma-separated)" ' +
@@ -975,12 +977,16 @@ function categoryEmoji(cat) {
   return '📌';
 }
 
+function formatDateDisplay(dateStr) {
+  // dateStr is "YYYY-MM-DD" from the date picker
+  var parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return parts[2] + '.' + parts[1] + '.' + parts[0];
+}
+
 function generateTopperMessage() {
-  var date = document.getElementById('topperDate').value.trim();
-  if (!date) {
-    var d = new Date();
-    date = String(d.getDate()).padStart(2,'0') + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + d.getFullYear();
-  }
+  var rawDate = document.getElementById('topperDate').value;
+  var date = rawDate ? formatDateDisplay(rawDate) : formatDateDisplay(getDefaultDateValue());
 
   var sections = document.querySelectorAll('#topperSections .topper-section');
   if (sections.length === 0) {
@@ -1000,16 +1006,18 @@ function generateTopperMessage() {
     var catSel = sec.querySelector('.topper-category').value;
     var catCustom = sec.querySelector('.topper-category-custom').value.trim();
     var category = catSel === 'custom' ? (catCustom || 'Registrations') : catSel;
+    var overall = sec.querySelector('.topper-overall').value.trim();
     var s4 = sec.querySelector('.topper-scale4').value.trim();
     var s3 = sec.querySelector('.topper-scale3').value.trim();
     var s2 = sec.querySelector('.topper-scale2').value.trim();
 
-    if (!s4 && !s3 && !s2) return; // skip empty sections
+    if (!overall && !s4 && !s3 && !s2) return; // skip empty sections
     hasContent = true;
 
     if (mtd) lines.push('🏅 _MTD Topper:_');
     lines.push(categoryEmoji(category) + ' *' + category + ':*');
     lines.push('➖➖➖➖➖➖➖➖➖➖');
+    if (overall) lines.push('🏆 *Overall Topper* - ' + overall);
     if (s4) lines.push('🥇 *Scale IV* - ' + s4);
     if (s3) lines.push('🥈 *Scale III* - ' + s3);
     if (s2) lines.push('🥉 *Scale II* - ' + s2);
@@ -1034,8 +1042,15 @@ function copyTopperFormatted() {
   copyToClipboard(lastTopperFormatted, 'topperStatus2', '✓ Copied! Paste into WhatsApp.');
 }
 
+function getDefaultDateValue() {
+  // Returns yesterday's date as "YYYY-MM-DD" for the date input
+  var d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 function clearTopper() {
-  document.getElementById('topperDate').value = '';
+  document.getElementById('topperDate').value = getDefaultDateValue();
   document.getElementById('topperSections').innerHTML = '';
   document.getElementById('topperWaBubble').innerHTML =
     '<span style="color:#aaa;font-style:italic;">Your formatted message will appear here...</span>';
@@ -1046,6 +1061,7 @@ function clearTopper() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('topperDate').value = getDefaultDateValue();
   addTopperSection();
 });
 </script>
